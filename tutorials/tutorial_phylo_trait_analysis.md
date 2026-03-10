@@ -10,7 +10,11 @@ A bonus step will be to make visualisation of the mapped traits on the tree.
 
 ## Steps
 
-### 1
+### 1 Phylogenetic tree
+
+- Newick format
+
+- NEXUS format
 
 ### 2
 
