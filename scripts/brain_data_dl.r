@@ -7,8 +7,16 @@
 
 # libraries --------------------------------------------------------------------
 
-#remotes::install_github("jonchang/fishtree", lib = "~/R/x86_64-pc-linux-gnu-library/")
-#remotes::install_github("ropensci/rfishbase", lib = "~/R/x86_64-pc-linux-gnu-library/")
+# creates a place to dl packages
+if (!dir.exists("~/R/x86_64-pc-linux-gnu-library/")) {
+  dir.create("~/R/x86_64-pc-linux-gnu-library/", recursive = TRUE)
+}
+
+# install packages that are not already installed on the server
+remotes::install_github("jonchang/fishtree", lib = "~/R/x86_64-pc-linux-gnu-library/")
+remotes::install_github("ropensci/rfishbase", lib = "~/R/x86_64-pc-linux-gnu-library/")
+install.packages("worrms", lib = "~/R/x86_64-pc-linux-gnu-library/")
+install.packages("geiger", lib = "~/R/x86_64-pc-linux-gnu-library/")
 
 library(fishtree) # fish phylogeny
 library(rfishbase) # fish trait database
