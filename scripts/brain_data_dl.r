@@ -44,6 +44,9 @@ spec_names <- rfishbase::species_names()
 brains <- inner_join(spec_names, brains, join_by(SpecCode))
 glimpse(brains)
 
+summary(brains)
+smol <- filter(brains, rel_brain_size <= quantile(rel_brain_size, 0.05, na.rm = TRUE))
+
 # 2 Phylogenetic tree ------------------------------------------------------------
 
 # downloading a fish phylogeny
