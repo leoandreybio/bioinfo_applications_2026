@@ -7,8 +7,35 @@
 
 # libraries --------------------------------------------------------------------
 
-#remotes::install_github("jonchang/fishtree", lib = "~/R/x86_64-pc-linux-gnu-library/")
-#remotes::install_github("ropensci/rfishbase", lib = "~/R/x86_64-pc-linux-gnu-library/")
+
+# Set custom library path
+lib_path <- "~/R/x86_64-pc-linux-gnu-library/"
+if (!dir.exists(lib_path)) {
+  dir.create(lib_path, recursive = TRUE)
+}
+.libPaths(lib_path)
+
+# Ensure remotes is installed
+if (!requireNamespace("remotes", quietly = TRUE)) {
+  install.packages("remotes", lib = lib_path)
+}
+
+# Install required packages if missing
+pkgs <- c("worrms", "geiger", "ape", "phytools", "tidyverse")
+for (pkg in pkgs) {
+  if (!requireNamespace(pkg, quietly = TRUE)) {
+    install.packages(pkg, lib = lib_path)
+  }
+}
+
+# Install GitHub packages if missing
+if (!requireNamespace("fishtree", quietly = TRUE)) {
+  remotes::install_github("jonchang/fishtree", lib = lib_path)
+}
+if (!requireNamespace("rfishbase", quietly = TRUE)) {
+  remotes::install_github("ropensci/rfishbase", lib = lib_path)
+}
+
 
 library(fishtree) # fish phylogeny
 library(rfishbase) # fish trait database
