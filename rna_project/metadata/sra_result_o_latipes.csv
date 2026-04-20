@@ -1,0 +1,2 @@
+"Experiment Accession","Experiment Title","Organism Name","Instrument","Submitter","Study Accession","Study Title","Sample Accession","Sample Title","Total Size, Mb","Total RUNs","Total Spots","Total Bases","Library Name","Library Strategy","Library Source","Library Selection"
+"SRX661036","Medaka brain","Oryzias latipes","Illumina HiSeq 2000","INRA","SRP044784","Oryzias latipes Transcriptome","SRS666011","","4408.63","1","33524858","6704971600","L_Ol_2","RNA-Seq","TRANSCRIPTOMIC","cDNA"
