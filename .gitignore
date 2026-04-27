@@ -50,3 +50,6 @@ rsconnect/
 
 # enlever le plot
 .pdf
+
+# data folder
+data/
