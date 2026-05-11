@@ -83,8 +83,8 @@ if [ ! -f "$INDEX_BASENAME.1.ht2" ]; then
   hisat2-build "$GENOME_FASTA" "$INDEX_BASENAME"
 fi
 
-# Align reads
-hisat2 -x "$INDEX_BASENAME" \
+# Align reads and convert to BAM
+hisat2 -p 16 -x "$INDEX_BASENAME" \
   -1 data/rnaseq/trimmed/${SRA_ACC}_1.paired.fastq \
   -2 data/rnaseq/trimmed/${SRA_ACC}_2.paired.fastq \
-  -S data/rnaseq/alignment/${SRA_ACC}_aligned.sam
+  | samtools view -bS - > data/rnaseq/alignment/conger_aligned.bam
