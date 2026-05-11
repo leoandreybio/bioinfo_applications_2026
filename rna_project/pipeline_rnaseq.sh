@@ -1,8 +1,12 @@
 #!/bin/bash
 set -e
 
+
 # Usage: ./script_rnaseq.sh <SRA_ACCESSION> <GENOME_ACCESSION>
 # Example: ./script_rnaseq.sh SRR17844033 GCF_963514075.1
+
+# Save the original working directory
+ORIG_DIR=$(pwd)
 
 if [ "$#" -ne 2 ]; then
   echo "Usage: $0 <SRA_ACCESSION> <GENOME_ACCESSION>"
@@ -15,7 +19,7 @@ GENOME_ACC="$2"
 ## Extract path for genome accession (e.g., GCF_053564925.1 -> 053/564/925)
 GENOME_DIGITS=$(echo $GENOME_ACC | sed -E 's/^GCF_([0-9]+)\..*/\1/')
 GENOME_PATH_PART=$(echo $GENOME_DIGITS | rev | sed -E 's/(.{3})/\1\//g' | rev | sed 's#/$##')
-GENOME_DIR="data/genomes/$GENOME_ACC"
+GENOME_DIR="$ORIG_DIR/data/genomes/$GENOME_ACC"
 
 # Downloading RNAseq data from SRA
 mkdir -p data/rnaseq
@@ -48,10 +52,11 @@ source $(conda info --base)/etc/profile.d/conda.sh
 conda activate NCBI-tools
 
 # Try datasets CLI, fallback to wget if needed
-if ! datasets download genome accession $GENOME_ACC --include genome,gff3; then
+if ! datasets download genome accession $GENOME_ACC --include genome,gff3,gtf; then
   echo "datasets CLI failed, using wget fallback..."
   wget -c ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/$GENOME_PATH_PART/${GENOME_ACC}_genomic.fna.gz || true
   wget -c ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/$GENOME_PATH_PART/${GENOME_ACC}_genomic.gff.gz || true
+  wget -c ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/$GENOME_PATH_PART/${GENOME_ACC}_genomic.gtf.gz || true
 else
   unzip -o ncbi_dataset.zip
 fi
@@ -69,22 +74,50 @@ if [ -z "$GENOME_FASTA" ]; then
   fi
 fi
 
-cd -
+# Return to the original directory
+cd "$ORIG_DIR"
+
 
 # Aligning the reads to the reference genome using HISAT2
 module load HISAT2
-mkdir -p data/rnaseq/alignment
+mkdir -p "$ORIG_DIR/data/rnaseq/alignment"
 
 # Build index if not present
 INDEX_DIR="$GENOME_DIR/index"
-INDEX_BASENAME="$INDEX_DIR/conger_index"
+INDEX_BASENAME="$INDEX_DIR/${GENOME_ACC}_index"
 if [ ! -f "$INDEX_BASENAME.1.ht2" ]; then
   mkdir -p "$INDEX_DIR"
   hisat2-build "$GENOME_FASTA" "$INDEX_BASENAME"
 fi
 
 # Align reads and convert to BAM
+FINAL_BAM="$ORIG_DIR/data/rnaseq/alignment/${SRA_ACC}_${GENOME_ACC}_aligned.bam"
+SORTED_BAM="$ORIG_DIR/data/rnaseq/alignment/${SRA_ACC}_${GENOME_ACC}_aligned.sorted.bam"
 hisat2 -p 16 -x "$INDEX_BASENAME" \
-  -1 data/rnaseq/trimmed/${SRA_ACC}_1.paired.fastq \
-  -2 data/rnaseq/trimmed/${SRA_ACC}_2.paired.fastq \
-  | samtools view -bS - > data/rnaseq/alignment/conger_aligned.bam
+  -1 "$ORIG_DIR/data/rnaseq/trimmed/${SRA_ACC}_1.paired.fastq" \
+  -2 "$ORIG_DIR/data/rnaseq/trimmed/${SRA_ACC}_2.paired.fastq" \
+  | samtools view -bS - > "$FINAL_BAM"
+
+# Sort the BAM file
+samtools sort -o "$SORTED_BAM" "$FINAL_BAM"
+
+
+# Index the sorted BAM file
+samtools index "$SORTED_BAM"
+
+# Counting the number of reads aligned to each gene using featureCounts
+# Load conda and activate a Subread environment
+module load Anaconda3
+if ! conda env list | grep -q subread-env; then
+  conda create -y -n subread-env -c bioconda subread
+fi
+source $(conda info --base)/etc/profile.d/conda.sh
+conda activate subread-env
+
+# Create output directory for counts if it doesn't exist
+mkdir -p "$ORIG_DIR/counts"
+
+# Count reads using featureCounts
+featureCounts -T 16 -p \
+  -a "$GENOME_DIR/ncbi_dataset/data/$GENOME_ACC"*.gff* \
+  -o "$ORIG_DIR/counts/${SRA_ACC}_${GENOME_ACC}_gene_counts.txt" "$SORTED_BAM"

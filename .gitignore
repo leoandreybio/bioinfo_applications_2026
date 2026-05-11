@@ -56,3 +56,6 @@ data/
 
 # test folder
 test/
+
+# counts folder
+counts/
