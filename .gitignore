@@ -53,3 +53,6 @@ rsconnect/
 
 # data folder
 data/
+
+# test folder
+test/
