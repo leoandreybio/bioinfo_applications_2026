@@ -54,11 +54,17 @@ conda activate NCBI-tools
 # Try datasets CLI, fallback to wget if needed
 if ! datasets download genome accession $GENOME_ACC --include genome,gff3,gtf; then
   echo "datasets CLI failed, using wget fallback..."
+  # Download genome, GFF, and GTF files
   wget -c ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/$GENOME_PATH_PART/${GENOME_ACC}_genomic.fna.gz || true
   wget -c ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/$GENOME_PATH_PART/${GENOME_ACC}_genomic.gff.gz || true
   wget -c ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/$GENOME_PATH_PART/${GENOME_ACC}_genomic.gtf.gz || true
 else
   unzip -o ncbi_dataset.zip
+  # If GTF is not present, try to download it manually
+  if [ ! -f "$GENOME_DIR/ncbi_dataset/data/${GENOME_ACC}/${GENOME_ACC}_genomic.gtf" ]; then
+    wget -c ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/$GENOME_PATH_PART/${GENOME_ACC}_genomic.gtf.gz || true
+    gunzip -k "${GENOME_ACC}_genomic.gtf.gz" || true
+  fi
 fi
 
 # Find the genome fasta file (decompressed if needed)
@@ -119,5 +125,5 @@ mkdir -p "$ORIG_DIR/counts"
 
 # Count reads using featureCounts
 featureCounts -T 16 -p \
-  -a "$GENOME_DIR/ncbi_dataset/data/$GENOME_ACC"*.gff* \
+  -a "$GENOME_DIR/ncbi_dataset/data/genomic.gtf" \
   -o "$ORIG_DIR/counts/${SRA_ACC}_${GENOME_ACC}_gene_counts.txt" "$SORTED_BAM"
