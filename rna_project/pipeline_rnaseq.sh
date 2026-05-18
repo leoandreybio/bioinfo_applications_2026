@@ -125,5 +125,5 @@ mkdir -p "$ORIG_DIR/counts"
 
 # Count reads using featureCounts
 featureCounts -T 16 -p \
-  -a "$GENOME_DIR/ncbi_dataset/data/genomic.gtf" \
+  -a "$GENOME_DIR/ncbi_dataset/data/$GENOME_ACC/genomic.gtf" \
   -o "$ORIG_DIR/counts/${SRA_ACC}_${GENOME_ACC}_gene_counts.txt" "$SORTED_BAM"
