@@ -2,8 +2,8 @@
 set -e
 
 
-# Usage: ./script_rnaseq.sh <SRA_ACCESSION> <GENOME_ACCESSION>
-# Example: ./script_rnaseq.sh SRR17844033 GCF_963514075.1
+# Usage: ./pipeline_rnaseq.sh <SRA_ACCESSION> <GENOME_ACCESSION>
+# Example: ./pipeline_rnaseq.sh SRR17844033 GCF_963514075.1
 
 # Save the original working directory
 ORIG_DIR=$(pwd)

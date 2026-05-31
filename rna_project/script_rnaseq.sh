@@ -16,8 +16,8 @@ module load FastQC
 mkdir -p reports/fastqc_report
 
 ## Running fastqc on both files
-fastqc -o reports/fastqc_report data/rnaseq/SRR17844033_1.fastq
-fastqc -o reports/fastqc_report data/rnaseq/SRR17844033_2.fastq
+fastqc -o reports/fastqc_report data/rnaseq/SRRXXXXXXXX_1.fastq
+fastqc -o reports/fastqc_report data/rnaseq/SRRXXXXXXXX_2.fastq
 
 # Trimming the reads using Trimmomatic
 
@@ -28,10 +28,10 @@ module load Trimmomatic
 mkdir -p data/rnaseq/trimmed
 
 ## Running Trimmomatic on both files
-trimmomatic PE -threads 4 -phred33 \
-data/rnaseq/SRR17844033_1.fastq data/rnaseq/SRR17844033_2.fastq \
-data/rnaseq/trimmed/SRR17844033_1.paired.fastq data/rnaseq/trimmed/SRR17844033_1.unpaired.fastq \
-data/rnaseq/trimmed/SRR17844033_2.paired.fastq data/rnaseq/trimmed/SRR17844033_2.unpaired.fastq \
+trimmomatic PE -threads 16 -phred33 \
+data/rnaseq/SRRXXXXXXXX_1.fastq data/rnaseq/SRRXXXXXXXX_2.fastq \
+data/rnaseq/trimmed/SRRXXXXXXXX_1.paired.fastq data/rnaseq/trimmed/SRRXXXXXXXX_1.unpaired.fastq \
+data/rnaseq/trimmed/SRRXXXXXXXX_2.paired.fastq data/rnaseq/trimmed/SRRXXXXXXXX_2.unpaired.fastq \
 ILLUMINACLIP:TruSeq3-PE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36
 
 # Downloading the reference genome
@@ -47,7 +47,7 @@ conda activate NCBI-tools
 
 ## Downloading the reference genome using datasets command-line tool
 cd data/genomes/conger_conger
-datasets download genome accession GCF_963514075.1 --include genome,gff3
+datasets download genome accession GCF_XXXXXXXXX.1 --include genome,gtf
 unzip ncbi_dataset.zip
 
 # Aligning the reads to the reference genome using HISAT2
@@ -61,8 +61,18 @@ mkdir -p data/rnaseq/alignment
 ## Building the index for the reference genome
 hisat2-build data/genomes/conger_conger/ncbi_dataset/data/GCF_963514075.1/GCF_963514075.1_fConCon1.1_genomic.fna data/genomes/conger_conger/ncbi_dataset/data/GCF_963514075.1/index/conger_index
 
+hisat2-build genome.fna index/genome_index
+
 ## Aligning the reads to the reference genome
 hisat2 -p 16 -x data/genomes/conger_conger/ncbi_dataset/data/GCF_963514075.1/index/conger_index \
 	-1 data/rnaseq/trimmed/SRR17844033_1.paired.fastq \
 	-2 data/rnaseq/trimmed/SRR17844033_2.paired.fastq \
 	| samtools view -bS - > data/rnaseq/alignment/conger_aligned.bam
+hisat2 -p 16 -x index/genome_index \
+	-1 trimmed_rnaseq_1.fastq \
+	-2 trimmed_rnaseq_2.fastq \
+	| samtools view -bS - > alignment/conger_aligned.bam
+
+featureCounts -T 16 -p \
+  -a "genomic.gtf" -o "gene_counts.txt" "alignment/conger_aligned.bam"
+
